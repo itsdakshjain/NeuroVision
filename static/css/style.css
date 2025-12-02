@@ -3041,7 +3041,7 @@ section {
 }
 
 .gradient-text-arch {
-    background: linear-gradient(135deg, var(--planetary), var(--teal), var(--universe));
+    background: linear-gradient(135deg, var(--planetary), var(--universe));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;

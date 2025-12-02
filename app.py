@@ -204,12 +204,6 @@ def index():
     return render_template('index.html')
 
 
-@app.route('/scan')
-def scan():
-    """Render dedicated scan page"""
-    return render_template('scan.html')
-
-
 @app.route('/api/health', methods=['GET'])
 def health_check():
     """API health check endpoint"""
