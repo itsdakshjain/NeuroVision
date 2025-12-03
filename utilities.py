@@ -508,6 +508,9 @@ def tversky(y_true, y_pred, smooth=1e-6):
     Allows different weights for false positives and false negatives.
     α = 0.7 penalizes false negatives more (important for medical imaging)
     """
+    # Cast to float32 for mixed precision compatibility
+    y_true = K.cast(y_true, 'float32')
+    y_pred = K.cast(y_pred, 'float32')
     y_true_pos = K.flatten(y_true)
     y_pred_pos = K.flatten(y_pred)
     true_pos = K.sum(y_true_pos * y_pred_pos)
@@ -537,6 +540,9 @@ def dice_coefficient(y_true, y_pred, smooth=1e-6):
     Dice Coefficient: 2 * |A ∩ B| / (|A| + |B|)
     Standard metric for segmentation tasks.
     """
+    # Cast to float32 for mixed precision compatibility
+    y_true = K.cast(y_true, 'float32')
+    y_pred = K.cast(y_pred, 'float32')
     y_true_f = K.flatten(y_true)
     y_pred_f = K.flatten(y_pred)
     intersection = K.sum(y_true_f * y_pred_f)
@@ -587,6 +593,9 @@ def iou_score(y_true, y_pred, smooth=1e-6):
     Intersection over Union (IoU / Jaccard Index).
     Standard metric for segmentation evaluation.
     """
+    # Cast to float32 for mixed precision compatibility
+    y_true = K.cast(y_true, 'float32')
+    y_pred = K.cast(y_pred, 'float32')
     y_true_f = K.flatten(y_true)
     y_pred_f = K.flatten(y_pred)
     intersection = K.sum(y_true_f * y_pred_f)
@@ -596,6 +605,9 @@ def iou_score(y_true, y_pred, smooth=1e-6):
 @register_keras_serializable()
 def sensitivity(y_true, y_pred, smooth=1e-6):
     """Sensitivity / Recall / True Positive Rate."""
+    # Cast to float32 for mixed precision compatibility
+    y_true = K.cast(y_true, 'float32')
+    y_pred = K.cast(y_pred, 'float32')
     true_positives = K.sum(y_true * K.round(y_pred))
     possible_positives = K.sum(y_true)
     return (true_positives + smooth) / (possible_positives + smooth)
@@ -603,6 +615,9 @@ def sensitivity(y_true, y_pred, smooth=1e-6):
 @register_keras_serializable()
 def specificity(y_true, y_pred, smooth=1e-6):
     """Specificity / True Negative Rate."""
+    # Cast to float32 for mixed precision compatibility
+    y_true = K.cast(y_true, 'float32')
+    y_pred = K.cast(y_pred, 'float32')
     true_negatives = K.sum((1 - y_true) * (1 - K.round(y_pred)))
     possible_negatives = K.sum(1 - y_true)
     return (true_negatives + smooth) / (possible_negatives + smooth)
