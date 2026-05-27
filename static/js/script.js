@@ -309,8 +309,14 @@ async function handleAnalyze() {
         });
         
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Analysis failed');
+            let errorMessage = 'Analysis failed';
+            try {
+                const error = await response.json();
+                errorMessage = error.error || errorMessage;
+            } catch {
+                errorMessage = response.statusText || errorMessage;
+            }
+            throw new Error(errorMessage);
         }
         
         const results = await response.json();
@@ -319,7 +325,6 @@ async function handleAnalyze() {
         // Show results
         setTimeout(() => {
             showResults(results);
-            isAnalyzing = false;
         }, 1000);
         
     } catch (error) {
@@ -588,6 +593,8 @@ function showResults(results) {
         
         // Scroll to results
         elements.resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        isAnalyzing = false;
+        setAnalyzeControlsLoading(false);
         
     }, 500);
 }
@@ -610,19 +617,19 @@ function generateResultsHTML(results) {
                 <span>Report ID: ${report.scan_id || 'N/A'}</span>
             </div>
             <div class="action-buttons">
-                <button class="action-btn" onclick="shareReport('copy')" title="Copy Link">
+                <button class="action-btn" type="button" onclick="shareReport('copy')" title="Copy Link">
                     <i class="fas fa-link"></i>
                     <span>Copy Link</span>
                 </button>
-                <button class="action-btn" onclick="shareReport('download')" title="Download Report">
+                <button class="action-btn" type="button" onclick="shareReport('download')" title="Download Report">
                     <i class="fas fa-download"></i>
                     <span>Download</span>
                 </button>
-                <button class="action-btn" onclick="shareReport('email')" title="Email Report">
+                <button class="action-btn" type="button" onclick="shareReport('email')" title="Email Report">
                     <i class="fas fa-envelope"></i>
                     <span>Email</span>
                 </button>
-                <button class="action-btn save-btn" onclick="saveToHistory()" title="Save to History">
+                <button class="action-btn save-btn" type="button" onclick="saveToHistory()" title="Save to History">
                     <i class="fas fa-bookmark"></i>
                     <span>Save</span>
                 </button>
@@ -863,11 +870,11 @@ function generateResultsHTML(results) {
         </div>
         
         <div class="results-button-group">
-            <button class="btn btn-secondary" onclick="printReport()">
+            <button class="btn btn-secondary" type="button" onclick="printReport()">
                 <i class="fas fa-print"></i>
                 Print Report
             </button>
-            <button class="btn btn-primary btn-new-scan" id="newScanBtn">
+            <button class="btn btn-primary btn-new-scan" id="newScanBtn" type="button">
                 <i class="fas fa-plus"></i>
                 Analyze Another Scan
             </button>
@@ -914,6 +921,11 @@ function downloadReportAsPDF() {
     // Create a printable version and trigger print
     const resultsContent = document.getElementById('resultsContainer').innerHTML;
     const printWindow = window.open('', '_blank');
+
+    if (!printWindow) {
+        showNotification('Please allow pop-ups to download or print the report.', 'error');
+        return;
+    }
     
     printWindow.document.write(`
         <!DOCTYPE html>
@@ -960,16 +972,12 @@ function printReport() {
 }
 
 async function saveToHistory() {
-    console.log('saveToHistory called');
-    console.log('currentResults:', currentResults);
-    
     if (!currentResults) {
         showNotification('No scan results to save', 'error');
         return;
     }
     
     try {
-        console.log('Sending request to /api/history/save');
         const response = await fetch(`${API_BASE_URL}/api/history/save`, {
             method: 'POST',
             headers: {
@@ -979,9 +987,7 @@ async function saveToHistory() {
             body: JSON.stringify(currentResults)
         });
         
-        console.log('Response status:', response.status);
         const data = await response.json();
-        console.log('Response data:', data);
         
         if (data.success) {
             showNotification('Scan saved to your history!', 'success');
@@ -991,7 +997,7 @@ async function saveToHistory() {
             }
         } else {
             if (data.authenticated === false) {
-                showNotification('Please login to save scans to history', 'warning');
+                showNotification('Please login to save scans to history', 'info');
                 showAuthModal('login');
             } else {
                 showNotification(data.error || 'Failed to save scan', 'error');
@@ -1024,15 +1030,16 @@ function handleNewScan() {
 // ==================== Navigation ====================
 function handleNavClick(e) {
     e.preventDefault();
+    const clickedLink = e.currentTarget;
     
     // Remove active class from all links
     elements.navLinks.forEach(link => link.classList.remove('active'));
     
     // Add active class to clicked link
-    e.target.classList.add('active');
+    clickedLink.classList.add('active');
     
     // Get target section
-    const targetId = e.target.getAttribute('href');
+    const targetId = clickedLink.getAttribute('href');
     const targetSection = document.querySelector(targetId);
     
     if (targetSection) {
@@ -1041,16 +1048,8 @@ function handleNavClick(e) {
 }
 
 function handleSmoothScroll(e) {
-    // Get href from the clicked element or its parent (for nested elements like logo)
-    let target = e.target;
-    let href = target.getAttribute('href');
-    
-    // Check parent elements if no href found (for nested elements in anchor tags)
-    while (!href && target.parentElement) {
-        target = target.parentElement;
-        href = target.getAttribute('href');
-        if (target.tagName === 'A') break;
-    }
+    const link = e.target.closest('a[href^="#"]');
+    const href = link?.getAttribute('href');
     
     if (href && href.startsWith('#')) {
         e.preventDefault();
@@ -1433,13 +1432,13 @@ async function checkAPIHealth() {
         const data = await response.json();
         
         if (data.status === 'healthy' && data.models_loaded) {
-            console.log('✓ API is healthy and models are loaded');
+            return;
         } else {
-            console.warn('⚠ API is running but models may not be loaded');
+            console.warn('API is running but models may not be loaded');
             showNotification('System initializing. Please wait...', 'info');
         }
     } catch (error) {
-        console.error('✗ Failed to connect to API:', error);
+        console.error('Failed to connect to API:', error);
         showNotification('Unable to connect to server. Please ensure the Flask app is running.', 'error');
     }
 }
@@ -1545,7 +1544,7 @@ function createAuthModal() {
     modal.innerHTML = `
         <div class="auth-modal-overlay" onclick="closeAuthModal()"></div>
         <div class="auth-modal-content">
-            <button class="auth-modal-close" onclick="closeAuthModal()">
+            <button class="auth-modal-close" type="button" onclick="closeAuthModal()">
                 <i class="fas fa-times"></i>
             </button>
             
@@ -1785,11 +1784,11 @@ function showUserMenu() {
                 </div>
             </div>
             <div class="user-menu-items">
-                <button onclick="showHistoryPanel()">
+                <button type="button" onclick="showHistoryPanel()">
                     <i class="fas fa-history"></i>
                     <span>Scan History</span>
                 </button>
-                <button onclick="handleLogout()">
+                <button type="button" onclick="handleLogout()">
                     <i class="fas fa-sign-out-alt"></i>
                     <span>Sign Out</span>
                 </button>
@@ -1860,7 +1859,7 @@ function createHistoryPanel() {
         <div class="history-panel-content">
             <div class="history-panel-header">
                 <h2><i class="fas fa-history"></i> Scan History</h2>
-                <button class="history-close-btn" onclick="closeHistoryPanel()">
+                <button class="history-close-btn" type="button" onclick="closeHistoryPanel()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -1914,10 +1913,10 @@ async function loadScanHistory() {
                         </div>
                     </div>
                     <div class="history-item-actions">
-                        <button class="history-view-btn" onclick="viewHistoryScan('${scan.id}')" title="View Details">
+                        <button class="history-view-btn" type="button" onclick="viewHistoryScan('${scan.id}')" title="View Details">
                             <i class="fas fa-eye"></i>
                         </button>
-                        <button class="history-delete-btn" onclick="deleteHistoryScan('${scan.id}')" title="Delete">
+                        <button class="history-delete-btn" type="button" onclick="deleteHistoryScan('${scan.id}')" title="Delete">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -1929,7 +1928,7 @@ async function loadScanHistory() {
                     <i class="fas fa-sign-in-alt"></i>
                     <h3>Login Required</h3>
                     <p>Please login to view your scan history.</p>
-                    <button onclick="closeHistoryPanel(); showAuthModal('login');" class="auth-btn">Sign In</button>
+                    <button type="button" onclick="closeHistoryPanel(); showAuthModal('login');" class="auth-btn">Sign In</button>
                 </div>
             `;
         } else {
@@ -2065,6 +2064,3 @@ window.NeuroScanAI = {
     showHistoryPanel,
     saveToHistory
 };
-
-console.log('%c🧠 NeuroScan AI Initialized', 'color: #334EAC; font-size: 16px; font-weight: bold;');
-console.log('%cReady for brain tumor detection!', 'color: #7098D1; font-size: 14px;');

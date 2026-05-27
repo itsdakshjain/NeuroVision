@@ -12429,9 +12429,14 @@ section {
     transition: all 0.3s ease;
 }
 
-.remove-btn-v2:hover {
+.remove-btn-v2:hover:not(:disabled) {
     background: #dc2626;
     color: white;
+}
+
+.remove-btn-v2:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
 }
 
 .preview-image-container {
@@ -12491,6 +12496,12 @@ section {
 .analyze-btn-v2:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+.analyze-btn-v2:focus-visible,
+.remove-btn-v2:focus-visible {
+    outline: 3px solid rgba(51, 78, 172, 0.35);
+    outline-offset: 3px;
 }
 
 .analyze-btn-v2 .btn-content {

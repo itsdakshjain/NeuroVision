@@ -40,16 +40,16 @@
                     <li><a href="#stats" class="nav-link">Stats</a></li>
                 </ul>
                 <div class="nav-actions">
-                    <button id="historyButton" onclick="showHistoryPanel()" style="display: none;">
+                    <button id="historyButton" type="button" onclick="showHistoryPanel()" style="display: none;">
                         <i class="fas fa-history"></i>
                         <span>History</span>
                     </button>
-                    <button id="authButton" onclick="showAuthModal('login')">
+                    <button id="authButton" type="button" onclick="showAuthModal('login')">
                         <i class="fas fa-sign-in-alt"></i>
                         <span>Sign In</span>
                     </button>
                 </div>
-                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Open navigation menu">
                     <i class="fas fa-bars"></i>
                 </button>
             </div>
@@ -1239,7 +1239,7 @@
                             <div class="image-preview-v2" id="imagePreview" style="display: none;">
                                 <div class="preview-header">
                                     <span class="preview-label"><i class="fas fa-file-image"></i> Uploaded Scan</span>
-                                    <button class="remove-btn-v2" id="removeBtn">
+                                    <button class="remove-btn-v2" id="removeBtn" type="button">
                                         <i class="fas fa-trash-alt"></i> Remove
                                     </button>
                                 </div>
@@ -1254,7 +1254,7 @@
                                 </div>
                             </div>
 
-                            <button class="analyze-btn-v2" id="analyzeBtn" disabled>
+                            <button class="analyze-btn-v2" id="analyzeBtn" type="button" disabled aria-busy="false">
                                 <span class="btn-content">
                                     <i class="fas fa-microscope"></i>
                                     <span>Begin Analysis</span>
@@ -1270,7 +1270,7 @@
                     </div>
 
                     <!-- Loading State (Step 3) - Doctor Review -->
-                    <div class="loading-state" id="loadingCard" style="display: none;">
+                    <div class="loading-state" id="loadingCard" style="display: none;" aria-live="polite" aria-busy="true">
                         <!-- Scanning Room Environment -->
                         <div class="scanning-room">
                             <!-- Left Panel - MRI Machine Visualization -->
